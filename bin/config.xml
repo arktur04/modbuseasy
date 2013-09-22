@@ -1,0 +1,22 @@
+﻿<config>
+  <port type="comport"> <!-- comport | ethernet | test-->
+    <portname>COM6</portname>
+    <bps>115200</bps>
+    <parity>odd</parity>
+    <stopbit>two</stopbit>
+    <comtimeout>2.5</comtimeout>
+  </port>
+  
+  <common>
+    <mode>slave</mode> <!--master | slave | test-->
+    <devaddress>1</devaddress>
+    <!--period>100</period--> <!--period>1000</period-->
+    <!--timeout>20</timeout-->  
+  </common>
+   
+  <varlist>
+    <var name="FloatVar1" type="float" tag="1000" space="holdings"/>
+    <var name="FloatVar2" type="int32" tag="1002" space="holdings"/>
+  </varlist>
+
+</config>
