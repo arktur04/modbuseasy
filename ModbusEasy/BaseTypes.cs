@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 //using System.Linq;
 using System.Text;
+using System.Globalization;
 
 namespace BaseTypes
 {
@@ -20,6 +21,34 @@ namespace BaseTypes
 
     class Converter
     {
+        private static NumberFormatInfo formatProvider;
+        // Create a NumberFormatInfo object and set some of its properties.
+        static Converter()
+        {
+            formatProvider = new NumberFormatInfo();
+            formatProvider.NumberDecimalSeparator = ".";
+            
+            //  provider.NumberGroupSeparator = ".";
+            //  provider.NumberGroupSizes = new int[] { 3 };
+        }
+
+        static public double stringToDouble(string s)
+        {
+            try
+            {
+                return Convert.ToDouble(s, formatProvider);
+            }
+            catch 
+            {
+                throw new FormatException("Conversion to double was failed, wrong string argument");
+            }
+        }
+
+        static public string doubleToString(double value)
+        {
+            return Convert.ToString(value, formatProvider);
+        }
+
         static public UInt32 tagsToUInt32(UInt16 tagHi, UInt16 tagLo)
         {
             return (UInt32)((tagHi << 16) | tagLo);
@@ -39,6 +68,24 @@ namespace BaseTypes
         static public UInt16 bytesToUInt16(byte byteHi, byte byteLo)
         { 
             return (UInt16)((byteHi << 8) | byteLo);
+        }
+
+        static public void uInt32ToTags(UInt32 value, out UInt16 tagHi, out UInt16 tagLo)
+        {
+            tagHi = (UInt16)((value >> 16) & 0x0000FFFF);
+            tagLo = (UInt16)(value & 0x0000FFFF);
+        }
+
+        static public void int32ToTags(Int32 value, out UInt16 tagHi, out UInt16 tagLo)
+        {
+            tagHi = (UInt16)((value >> 16) & 0x0000FFFF);
+            tagLo = (UInt16)(value & 0x0000FFFF);
+        }
+
+        static public unsafe void floatToTags(float value, out UInt16 tagHi, out UInt16 tagLo)
+        {
+            UInt32 data = *((UInt32*)&value);
+            uInt32ToTags(data, out tagHi, out tagLo);
         }
     }
 /*
@@ -124,13 +171,13 @@ namespace BaseTypes
         private bool tag1Changed;
         private bool tag2Changed;
         //------------------------------
-        public UInt16 UInt16Value { get { return tag1; } }
-        public Int16 Int16Value { get { return (Int16)tag1; } }
-        public UInt32 UInt32Value { get { return Converter.tagsToUInt32(tag1, tag2); } }
-        public Int32 Int32Value { get { return Converter.tagsToInt32(tag1, tag2); } }
-        public float FloatValue { get { return Converter.tagsToFloat(tag1, tag2); } }
+        public UInt16 uInt16Value { get { return tag1; } }
+        public Int16 int16Value { get { return (Int16)tag1; } }
+        public UInt32 uInt32Value { get { return Converter.tagsToUInt32(tag1, tag2); } }
+        public Int32 int32Value { get { return Converter.tagsToInt32(tag1, tag2); } }
+        public float floatValue { get { return Converter.tagsToFloat(tag1, tag2); } }
 
-        public string StringValue { get { return strValue(); } }
+        public string stringValue { get { return strValue(); } }
         //-------------
         // events
         //-----------------
@@ -203,15 +250,47 @@ namespace BaseTypes
             }
         }
 
+        public bool setValue(double value)
+        {
+            try
+            {
+                UInt16 tagHi = 0, tagLo = 0;
+
+                switch (varType)
+                {
+                    case VarType.Float:
+                        Converter.floatToTags((float)value, out tagHi, out tagLo);
+                        break;
+                    case VarType.UInt16:
+                        tag1 = (UInt16) value;
+                        break;
+                    case VarType.UInt32: 
+                        Converter.uInt32ToTags((UInt32)value, out tagHi, out tagLo);
+                        break;
+                    case VarType.Int16:
+                        tag1 = (UInt16) value;
+                        break;
+                    case VarType.Int32:
+                        Converter.int32ToTags((Int32)value, out tagHi, out tagLo);
+                        break;
+                }
+                tag1 = tagHi;      //tag order???
+                tag2 = tagLo;
+                return true;
+            }
+            catch {}
+            return false;
+        }
+
         private string strValue()
         {
             switch (varType)
             {
-                case VarType.Float: return FloatValue.ToString();
-                case VarType.UInt16: return Int16Value.ToString();
-                case VarType.UInt32: return UInt32Value.ToString();
-                case VarType.Int16: return Int16Value.ToString();
-                case VarType.Int32: return Int32Value.ToString();
+                case VarType.Float: return Converter.doubleToString(floatValue);
+                case VarType.UInt16: return int16Value.ToString();
+                case VarType.UInt32: return uInt32Value.ToString();
+                case VarType.Int16: return int16Value.ToString();
+                case VarType.Int32: return int32Value.ToString();
                 default: return "";
             }
         }

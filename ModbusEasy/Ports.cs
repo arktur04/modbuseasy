@@ -76,7 +76,11 @@ namespace Ports
 
         public override void send(byte[] msg)
         {
-            serialPort.Write(msg, 0, msg.Length);
+            try
+            {
+                serialPort.Write(msg, 0, msg.Length);
+            }
+            catch { };
         }
 
         public override void open()

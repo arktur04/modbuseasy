@@ -4,7 +4,7 @@ using BaseTypes;
 
 namespace CommandUtils
 {
-    //static methods for command line parsing and userr input parsing
+    //static methods for command line parsing and user input parsing
     public class CParser
     {
         // find config file name in the command line
@@ -50,7 +50,7 @@ namespace CommandUtils
             return configRe.IsMatch(commandLine);
         }
         //aux function for command parsing
-        static bool StringToSpace(string val, out Space space)
+        private static bool StringToSpace(string val, out Space space)
         {
             switch (val)
             {
@@ -346,6 +346,66 @@ namespace CommandUtils
                 return false;
             }
         }
+
+        //-----------------------------------------------------------
+        // set/get storage value by name
+        //----------------------------------------------------------
+        //command:
+        // getdb <name>
+        //where <name> is a variable name
+        public static bool isGetDbValue(string commandLine, out string varName)
+        {
+            try
+            {
+                Regex getDbValueRe = new Regex(@"^getdb ([a-zA-Z_]\w*)$");
+                MatchCollection m = getDbValueRe.Matches(commandLine);
+                varName = m[0].Groups[1].Value;
+                return true;
+            }
+            catch
+            {
+                varName = null;
+                return false;
+            }
+        }
+
+        //command:
+        // setdb <name> <value>
+        //where <name> is a variable name
+        public static bool isSetDbValue(string commandLine, out string varName, out double value)
+        {
+            try
+            {
+                Regex setDbValueRe = new Regex(@"^setdb ([a-zA-Z_]\w*) ([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)$");
+                MatchCollection m = setDbValueRe.Matches(commandLine);
+                varName = m[0].Groups[1].Value;
+                value = Converter.stringToDouble(m[0].Groups[2].Value);
+                return true;
+            }
+            catch
+            {
+                varName = null;
+                value = 0;
+                return false;
+            }
+        }
+
+        //-----------------------------------------------------------
+        // get all storage variables
+        //----------------------------------------------------------
+        // getdb -a
+        public static bool isGetDbVariables(string commandLine)
+        {
+            try
+            {
+                Regex getDbVarsRe = new Regex(@"^-?getdb -a$");
+                return getDbVarsRe.IsMatch(commandLine);
+            }
+            catch
+            {
+                return false;
+            }
+        }
         #endregion
        
         #region get/set mode
@@ -421,6 +481,8 @@ namespace CommandUtils
                     "examples:\r\n" +
                     "getdb coils 1000 // get a value of coil number 1000" +
                     "getdb di 500 520 //get values of discrete inputs from 500 to 520\r\n" +
+                    "getdb -a //get names of all variables" + 
+                    "getdb <varname> //get var value" +
                     "\r\n" +
                     "setdb <space> <tag1> [<tag2>] = <value> ... <value> // set values of tags from tag1 to tag2\r\n" +
                     "examples:\r\n" +
@@ -428,6 +490,7 @@ namespace CommandUtils
                     "setdb hold 200 202 = 2000 2010 2020 //set values of holdings: [200] = 2000, [201] = 2010, [202] = 2020\r\n" +
                     "if data is partially omitted, it is assumed that last value is repeated for all tags.\r\n" +
                     "setdb hold 200 202 = 2000 2010 //set values of holdings: [200] = 2000, [201] = 2010, [202] = 2010\r\n" +
+                    "setdb <varname> <value> //example: setdb FloatVar 123.456" +
                     "General commands:\r\n" +
                     "p - pause\r\n" +
                     "r - resume\r\n" +

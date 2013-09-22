@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Timers;
 using System.Text.RegularExpressions;
+using System.IO;
 using Config;
 using BaseTypes;
 using Ports;
@@ -81,10 +82,15 @@ namespace ConfigReaderTest
                 CParser.configFileName(arg, ref configFileName);
             }
             Console.WriteLine("config = {0}", configFileName);  //debug purpouse
-
             ConfigReader configReader = new ConfigReader();
-            configReader.loadFromFile(configFileName);
-
+            try
+            {
+                configReader.loadFromFile(configFileName);
+            }
+            catch (FileLoadException)
+            {
+                Console.WriteLine("Can't load config file");
+            }
             globalObject.transactonFinishedEvent = Transaction_Finished;
 
             Transaction.currId = 0; //initial transaction id
@@ -183,9 +189,8 @@ namespace ConfigReaderTest
 
                 // parse command
                 command = Console.ReadLine();
-                // command.CompareTo(
 
-                if(CParser.configFileName(command, ref configFileName))
+                if (CParser.configFileName(command, ref configFileName))
                 {
                     Console.WriteLine("config = {0}", configFileName);
                 }
@@ -198,9 +203,6 @@ namespace ConfigReaderTest
                 UInt16 tag1 = 0;
                 UInt16 tag2 = 0;
                 UInt16[] data = null;
-             //   bool tagBoolData = false;
-             //   UInt16 tagData = 0;
-             //   bool[] tagBoolDataArr = null;
                 int func;
 
                 if (CParser.isFunction(command, out func, out tag1, out tag2, out data))
@@ -238,10 +240,42 @@ namespace ConfigReaderTest
                         Console.WriteLine(String.Format("set {0} {1} = {2}", s1, s2, s3));
                     }
                 }
+                if (CParser.isGetDbVariables(command))
+                {
+                    foreach(Var variable in globalObject.varList)
+                    {
+                        Console.WriteLine("{0} {1} {2}", variable.name, variable.varType, variable.stringValue);
+                    }
+                }
+
+                string varName;
+                if (CParser.isGetDbValue(command, out varName))
+                {
+                    Var v = globalObject.findVar(varName);
+                    if (v != null)
+                        Console.WriteLine("{0} {1}", varName, v.stringValue);
+                }
+
+                double value;
+                if (CParser.isSetDbValue(command, out varName, out value))
+                {
+                    Var v = globalObject.findVar(varName);
+                    if(v != null)
+                    {
+                        if (v.setValue(value))
+                        {
+                            Console.WriteLine("{0} = {1}", v.name, v.stringValue);
+                        }
+                        else
+                        {
+                            Console.WriteLine("error occured");
+                        }
+                    }
+                }
                 //-----------------------------
                 // get/set mode command
                 Mode mode = Mode.Master;
-                if(CParser.isGetMode(command))
+                if (CParser.isGetMode(command))
                 {
                     Console.WriteLine(String.Format("{0} mode", globalObject.mode));
                 }

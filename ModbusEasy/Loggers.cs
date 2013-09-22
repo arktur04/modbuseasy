@@ -41,7 +41,7 @@ namespace Loggers
             switch (var.state = VarState.OK)
             {
                 case VarState.OK:
-                    sw.WriteLine("{1}{0}{2}{0}{3}", separator, DateTime.Now, var.name, var.StringValue);
+                    sw.WriteLine("{1}{0}{2}{0}{3}", separator, DateTime.Now, var.name, var.stringValue);
                     break;
                 case VarState.Error:
                     sw.WriteLine("{1}{0}{2}{0}Error", separator, DateTime.Now, var.name);

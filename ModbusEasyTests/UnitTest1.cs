@@ -210,10 +210,10 @@ namespace ModbusEasyTests
             ProtocolError pe = modbusRtuProtocol.decode(respMsg1, query, response);
 
             Assert.IsTrue(pe == ProtocolError.OK);
-            Assert.IsTrue(modbusRtuProtocol.query.globalObject.addrVarMap[new ModbusAddress(Space.Coils, 0x00)].UInt16Value == 1);
-            Assert.IsTrue(modbusRtuProtocol.query.globalObject.addrVarMap[new ModbusAddress(Space.Coils, 0x01)].UInt16Value == 0);
-            Assert.IsTrue(modbusRtuProtocol.query.globalObject.addrVarMap[new ModbusAddress(Space.Coils, 0x02)].UInt16Value == 1);
-            Assert.IsTrue(modbusRtuProtocol.query.globalObject.addrVarMap[new ModbusAddress(Space.Coils, 0x03)].UInt16Value == 0);
+            Assert.IsTrue(modbusRtuProtocol.query.globalObject.addrVarMap[new ModbusAddress(Space.Coils, 0x00)].uInt16Value == 1);
+            Assert.IsTrue(modbusRtuProtocol.query.globalObject.addrVarMap[new ModbusAddress(Space.Coils, 0x01)].uInt16Value == 0);
+            Assert.IsTrue(modbusRtuProtocol.query.globalObject.addrVarMap[new ModbusAddress(Space.Coils, 0x02)].uInt16Value == 1);
+            Assert.IsTrue(modbusRtuProtocol.query.globalObject.addrVarMap[new ModbusAddress(Space.Coils, 0x03)].uInt16Value == 0);
 
             respMsg1[6] ^= respMsg1[6];  //make the crc wrong
             pe = modbusRtuProtocol.decode(respMsg1, query, response);
@@ -225,7 +225,7 @@ namespace ModbusEasyTests
         [TestMethod]
         public void ModbusRtuProtocol_buildMessage()
         {
-            Assert.IsTrue(false);
+            Assert.IsTrue(false);  // to do!
         }
 
         [TestMethod]

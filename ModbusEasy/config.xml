@@ -1,43 +1,22 @@
-<config>
+﻿<config>
   <port type="comport"> <!-- comport | ethernet | test-->
     <portname>COM6</portname>
-    <bps>9600</bps>
+    <bps>115200</bps>
     <parity>odd</parity>
     <stopbit>two</stopbit>
     <comtimeout>2.5</comtimeout>
   </port>
   
   <common>
-    <mode>master</mode> <!--master | slave | test-->
+    <mode>slave</mode> <!--master | slave | test-->
     <devaddress>1</devaddress>
-    <period>1000</period> 
-    <timeout>200</timeout>  
+    <!--period>100</period--> <!--period>1000</period-->
+    <!--timeout>20</timeout-->  
   </common>
-  
-  <saving>
-    <!--сохранение в CSV-->
-    <csv filename="mysaving.csv" separator=" // "/>
-    <!--сохранение в базу данных-->
-    <db/>  
-  </saving>
-  
+   
   <varlist>
     <var name="FloatVar1" type="float" tag="1000" space="holdings"/>
     <var name="FloatVar2" type="int32" tag="1002" space="holdings"/>
   </varlist>
 
-  <querylist>
-    <!--функция 3 - чтение нескольких holdings-->
-    <query function="3" start="1000" tagnum="4"/>
-    <query function="3" start="1010" tagnum="10"/>
-    <!--функция 6 - запись в holding-->
-    <query function="6" start="2010" value="1234"/>
-    <!--функция 16 - запись в несколько holdings-->
-    <query function="16" start="2000" tagnum="4">
-      <data tag="2000" value="2001"/>
-      <data tag="2001" value="2002"/>
-      <data tag="2002" value="2003"/>
-      <data tag="2003" value="2004"/>
-    </query>
-  </querylist>
 </config>

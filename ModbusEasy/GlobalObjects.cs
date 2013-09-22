@@ -9,6 +9,7 @@ using Protocols;
 using Ports;
 using Loggers;
 using TagDataBase;
+using CommandUtils;
 
 namespace GlobalObjects
 {
@@ -84,7 +85,7 @@ namespace GlobalObjects
         public Timer timer { get; set; } // создается здесь
 
         public int timeOut { get; set; } // значение заполняется в Program
-        
+
         //--------------
         // отображение множества тэгов на множество переменных
         public AddrVarMap addrVarMap = new AddrVarMap(); // значение заполняется в buildAddrVarMap()
@@ -102,6 +103,14 @@ namespace GlobalObjects
             timer = new Timer();
             mode = Mode.Test;
         }
+        
+        public Var findVar(string name)
+        {
+            foreach (Var v in mVarList)
+                if (v.name == name)
+                    return v;
+            return null;
+        }
 
         protected void buildAddrVarMap()
         {
@@ -109,11 +118,6 @@ namespace GlobalObjects
             foreach (Var v in varList)
             {
                 addrVarMap.AddVar(v);
-                /*
-                for (int i = v.addr.tag; i < v.addr.tag + v.numTags; i++)
-                {
-                    addrVarMap.Add(i, v);
-                }*/
             }
         }
 
@@ -124,32 +128,5 @@ namespace GlobalObjects
                 csvLogger.Append(var);
             }
         }
-        /*
-        public void updateTagRange(int fromTag, int tagQuantity)
-        {
-            if (tagVarMap != null)
-            {
-                for (int tag = fromTag; tag < fromTag + tagQuantity; tag++)
-                {
-                    if (tagVarMap.ContainsKey(tag))
-                    {
-                        Var v = tagVarMap[tag];
-                        v.varChanged();
-                    }
-                }
-            }
-        }
-        */
-
-        /*
-        protected void fillQueryList()
-        {
-            foreach (Query q in queryList)
-            {
-                q.varList = varList;
-              //  q.fillHashSet();// не нужно?
-            }
-        }
-         */
     }
 }
