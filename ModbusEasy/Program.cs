@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.Linq;
-using System.Text;
-using System.Timers;
-using System.Text.RegularExpressions;
 using System.IO;
-using Config;
+using System.Timers;
 using BaseTypes;
-using Ports;
-using TransactionClasses;
-using GlobalObjects;
-using Protocols;
-using Debugs;
 using CommandUtils;
+using Config;
+using Debugs;
+using GlobalObjects;
+using Ports;
+using Protocols;
+using TransactionClasses;
 
 namespace ConfigReaderTest
 {
@@ -224,7 +221,7 @@ namespace ConfigReaderTest
                     {
                         String s1 = space.ToString();
                         String s2 = tag.ToString();
-                        String s3 = globalObject.tagStorage.getTag(new ModbusAddress(space, (UInt16)tag)).ToString();
+                        String s3 = globalObject.tagStorage.getTag(space, tag).ToString();
                         Console.WriteLine(String.Format("{0} {1} = {2}", s1, s2, s3));
                     }
                 }
@@ -235,7 +232,7 @@ namespace ConfigReaderTest
                     {
                         String s1 = space.ToString();
                         String s2 = tag.ToString();
-                        globalObject.tagStorage.setTag(new ModbusAddress(space, (UInt16)tag), dbTagData[tag - tag1]);
+                        globalObject.tagStorage.setTag(space, tag, dbTagData[tag - tag1]);
                         String s3 = dbTagData[tag - tag1].ToString();
                         Console.WriteLine(String.Format("set {0} {1} = {2}", s1, s2, s3));
                     }

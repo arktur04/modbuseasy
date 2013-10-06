@@ -364,7 +364,7 @@ namespace ModbusEasyTests
                 Assert.IsTrue(resp[i] == ans[i]);
             coils = new bool[] { true, true, true, false, true, true, false, false };
             for (int i = 0; i < 8; i++)
-                Assert.IsTrue(go.tagStorage.coils[i] == coils[i]);
+                Assert.IsTrue((go.tagStorage.getTag(Space.Coils, i) != 0) == coils[i]);// coils[i] == coils[i]);
 
             //---------------
             // function 16
@@ -382,7 +382,7 @@ namespace ModbusEasyTests
                 Assert.IsTrue(resp[i] == ans[i]);
             holdings = new UInt16[] { 0x0001, 0x0203, 0x0405 };
             for (int i = 0; i < 3; i++)
-                Assert.IsTrue(go.tagStorage.holdings[i] == holdings[i]);
+                Assert.IsTrue(go.tagStorage.getTag(Space.Holdings, i) == holdings[i]);
         }
         #endregion
 

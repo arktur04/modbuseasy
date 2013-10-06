@@ -11,56 +11,84 @@ namespace TagDataBase
     {
         const int TAGNUM = 65536;
 
-        public bool[] coils {get; set;}
-        public bool[] dinputs {get; set;}
-        public UInt16[] ainputs{get; set;}
-        public UInt16[] holdings{get; set;}
-        
+        private bool[] mCoils;
+        private bool[] mDInputs;
+        private UInt16[] mAInputs;
+        private UInt16[] mHoldings;
+
         public TagStorage()
         {
-            coils = new bool[TAGNUM];
-            dinputs = new bool[TAGNUM];
-            ainputs = new UInt16[TAGNUM];
-            holdings = new UInt16[TAGNUM];
+            mCoils = new bool[TAGNUM];
+            mDInputs = new bool[TAGNUM];
+            mAInputs = new UInt16[TAGNUM];
+            mHoldings = new UInt16[TAGNUM];
         }
         
+
         public void setTag(ModbusAddress addr, UInt16 value)
         {
-            switch(addr.space)
+            setTag(addr.space, addr.tag, value);
+        }
+
+        public void setTag(Space space, UInt16 tag, UInt16 value)
+        {
+            switch (space)
             {
-                case Space.Coils: 
-                    coils[addr.tag] = value != 0;
+                case Space.Coils:
+                    mCoils[tag] = value != 0;
                     break;
                 case Space.DiscreteInputs:
-                    dinputs[addr.tag] = value != 0;
+                    mDInputs[tag] = value != 0;
                     break;
                 case Space.AnalogInputs:
-                    ainputs[addr.tag] = value;
+                    mAInputs[tag] = value;
                     break;
                 case Space.Holdings:
-                    holdings[addr.tag] = value;
+                    mHoldings[tag] = value;
                     break;
             }
+
+        }
+
+        public void setTag(Space space, int tag, int value)
+        {
+            if (tag > UInt16.MaxValue || tag < 0)
+                new ArgumentOutOfRangeException(String.Format("tag {0} is out  of range", tag));
+            if (value > UInt16.MaxValue || value < 0)
+                new ArgumentOutOfRangeException(String.Format("value {0} is out  of range", value));
+            setTag(space, (UInt16)tag, (UInt16)value);
         }
 
         public UInt16 getTag(ModbusAddress addr)
         {
+            return getTag(addr.space, addr.tag);
+        }
+
+        public UInt16 getTag(Space space, UInt16 tag)
+        {
             try
             {
-                switch(addr.space)
+                switch (space)
                 {
                     case Space.Coils:
-                        return (UInt16)(coils[addr.tag]? 1 : 0);
+                        return (UInt16)(mCoils[tag] ? 1 : 0);
                     case Space.DiscreteInputs:
-                        return (UInt16)(dinputs[addr.tag]? 1 : 0);
+                        return (UInt16)(mDInputs[tag] ? 1 : 0);
                     case Space.AnalogInputs:
-                        return ainputs[addr.tag];
+                        return mAInputs[tag];
                     case Space.Holdings:
-                        return holdings[addr.tag];
+                        return mHoldings[tag];
                 }
             }
-            catch{}
+            catch { }
             throw new Exception("getTag error");
+        }
+
+        public UInt16 getTag(Space space, int tag)
+        {
+            if (tag > UInt16.MaxValue || tag < 0)
+                new ArgumentOutOfRangeException(String.Format("tag {0} is out  of range", tag));
+            return getTag(space, (UInt16)tag);
         }
     }
 

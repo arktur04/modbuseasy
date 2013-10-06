@@ -276,6 +276,7 @@ namespace BaseTypes
                 }
                 tag1 = tagHi;      //tag order???
                 tag2 = tagLo;
+                varChanged();
                 return true;
             }
             catch {}

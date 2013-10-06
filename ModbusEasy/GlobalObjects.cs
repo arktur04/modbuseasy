@@ -112,6 +112,63 @@ namespace GlobalObjects
             return null;
         }
 
+        public void updateTags(Space space, UInt16 firstTag, UInt16[] tagData)
+        {
+            if (tagData != null)
+            {
+                for(int tag = firstTag; tag < tagData.Length + firstTag; tag++)
+                    tagStorage.setTag(space, tag, tagData[tag - firstTag]);
+            }
+        }
+
+        public void updateTags(Space space, UInt16 firstTag, bool[] tagData)
+        {
+            if (tagData != null)
+            {
+                for (int tag = firstTag; tag < tagData.Length + firstTag; tag++)
+                    tagStorage.setTag(space, tag, tagData[tag - firstTag]? 1: 0);                
+            }
+        }
+
+        public void updateVariables(Space space, UInt16 firslTag, UInt16 lastTag)
+        {
+            LinkedList<Var> varList = new LinkedList<Var>();
+            for (UInt16 tag = firslTag; tag <= lastTag; tag++)
+            {
+                ModbusAddress addr = new ModbusAddress(space, tag);
+                if (addrVarMap.ContainsKey(addr))
+                {
+                    Var v = addrVarMap[addr];
+                    v.setTagValue(tag, tagStorage.getTag(space, tag));
+                    varList.AddLast(v);
+                }
+            }
+            foreach (Var v in varList)
+            {
+                v.varChanged();
+            }
+        }
+
+        public void updateVariables(Space space, int firslTag, int lastTag)
+        {
+            updateVariables(space, (UInt16)firslTag, (UInt16)lastTag);
+        }
+
+        public void fillTagsFromVarList()
+        {
+            if (varList == null)
+                return; // for test purpose its allowed use this object without the varList
+             //   throw new NullReferenceException("varList is null");
+            if(tagStorage == null)
+                throw new NullReferenceException("tagStorage is null");
+            foreach(Var v in varList)
+            {
+                tagStorage.setTag(v.addr, v.tag1);
+                if(v.numTags >= 2)
+                    tagStorage.setTag(v.addr.space, v.addr.tag + 1, v.tag2);
+            }
+        }
+
         protected void buildAddrVarMap()
         {
             addrVarMap.Clear();

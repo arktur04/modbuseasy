@@ -52,6 +52,8 @@ namespace Protocols
          }
     }
 
+    // build the message to a remote device
+    // --- master mode ---
     public class ModbusRtuProtocol : ModbusProtocol
     {
         public int deviceAddress { get; set; }
@@ -60,6 +62,8 @@ namespace Protocols
         {
             UInt16 crc;
             byte[] result;
+
+            globalObject.fillTagsFromVarList();  // update the tag storage before the building of the query
 
             if (query != null)
             {
@@ -198,6 +202,9 @@ namespace Protocols
             return FuncSet.Contains(function);
         }
 
+
+        //decode an answer of a remote device
+        //--- master mode ---
         public override ProtocolError decode(byte[] msg, Query query, Response response)
         {
             this.query = query;
@@ -244,22 +251,8 @@ namespace Protocols
 
                     if (function >= 1 && function <= 6)
                     {
-                        LinkedList<Var> varList = new LinkedList<Var>();
-                        Space space = ModbusProtocol.getSpace(function);
-                        for (UInt16 tag = query.startTag; tag < query.startTag + query.tagNum; tag++)
-                        {
-                            ModbusAddress addr = new ModbusAddress(space, tag);
-                            if (globalObject.addrVarMap.ContainsKey(addr))
-                            {
-                                Var v = globalObject.addrVarMap[addr];
-                                v.setTagValue(tag, tagValues[tag - query.startTag]);
-                                varList.AddLast(v);
-                            }
-                        }
-                        foreach(Var v in varList)
-                        {
-                            v.varChanged();
-                        }
+                        globalObject.updateTags(ModbusProtocol.getSpace(function), query.startTag, tagValues);
+                        globalObject.updateVariables(ModbusProtocol.getSpace(function), query.startTag, query.startTag + query.tagNum - 1);
                     }
                 }
                 else
@@ -459,15 +452,17 @@ namespace Protocols
             return Converter.bytesToUInt16(uchCRCHi, uchCRCLo);// (UInt16)(uchCRCHi << 8 | uchCRCLo);
         }
 
+
+        // build the response on an master query
+        //  --- slave mode ---
         public override byte[] buildResponse(byte[] msg)
         {
-            // UInt16[] data;
             UInt16 tagValue;
-            UInt16 startTag;
-            UInt16 tagNum;
+            UInt16 startTag = 0;
+            UInt16 tagNum = 0;
             UInt16 crc;
             byte[] response;
-            Space space;
+            Space space = Space.Holdings; // default value, actually the space is set in the each case
             //check if used objects are not null
             if (msg == null)
                 throw new AccessViolationException("msg object is null at ModbusRtuTestPort.buildResponse");
@@ -475,6 +470,9 @@ namespace Protocols
                 throw new AccessViolationException("globalObject object is null at ModbusRtuTestPort.buildResponse");
             if (globalObject.tagStorage == null)
                 throw new AccessViolationException("globalObject.tagStorage object is null at ModbusRtuTestPort.buildResponse");
+
+            globalObject.fillTagsFromVarList();
+
             //check if msg has minimal length
             if (msg.Length < 4)
             {
@@ -483,6 +481,7 @@ namespace Protocols
             //check address
             if (msg[0] == deviceAddress)
             {
+                #region build the response message
                 byte func = msg[1];
                 switch (func)
                 {
@@ -508,7 +507,7 @@ namespace Protocols
                         byte b = 0; //текущее значение байта, в который упаковывается результат
                         for (UInt16 tag = startTag; tag < startTag + tagNum; tag++)
                         {
-                            tagValue = globalObject.tagStorage.getTag(new ModbusAddress(space, tag));
+                            tagValue = globalObject.tagStorage.getTag(space, tag);
                             if ((tag - startTag) % 8 == 0)
                             {
                                 b = 0;
@@ -545,7 +544,7 @@ namespace Protocols
                         response[2] = (byte)(tagNum * 2);
                         for (UInt16 tag = startTag; tag < startTag + tagNum; tag++)
                         {
-                            tagValue = globalObject.tagStorage.getTag(new ModbusAddress(space, tag));
+                            tagValue = globalObject.tagStorage.getTag(space, tag);
                             response[3 + (tag - startTag) * 2] = (byte)(tagValue >> 8);
                             response[4 + (tag - startTag) * 2] = (byte)tagValue;
                         }
@@ -575,8 +574,8 @@ namespace Protocols
                         response[2] = (byte)(startTag >> 8);
                         response[3] = (byte)startTag;
 
-                        globalObject.tagStorage.setTag(new ModbusAddress(space, startTag), (UInt16)(msg[4] << 8 | msg[5]));
-                        tagValue = globalObject.tagStorage.getTag(new ModbusAddress(space, startTag));
+                        globalObject.tagStorage.setTag(space, startTag, msg[4] << 8 | msg[5]);
+                        tagValue = globalObject.tagStorage.getTag(space, startTag);
                         if (space == Space.Coils) //for coils, any value != 0 should be convert to 0xFF00
                         {
                             tagValue = (UInt16)((tagValue != 0) ? 0xFF00 : 0);
@@ -598,6 +597,7 @@ namespace Protocols
                         //---------------
                         if(func == 15)
                         {
+                            space = Space.Coils;
                             for(int tag = startTag; tag < startTag + tagNum; tag++)
                             {
                                 int bit = tag - startTag;
@@ -605,12 +605,13 @@ namespace Protocols
                                 int dataBit = bit % 8;
                                 if (dataByte < msg[6])
                                 {
-                                    globalObject.tagStorage.coils[tag] = (msg[dataByte + 7] & (1 << dataBit)) != 0;
+                                    globalObject.tagStorage.setTag(space, tag, msg[dataByte + 7] & (1 << dataBit));
                                 }
                             }
                         }
                         if(func == 16)
                         {
+                            space = Space.Holdings;
                             if (msg.Length < 11)
                                 return new byte[0];  //wrong query - do not answer
                             for (int tag = startTag; tag < startTag + tagNum; tag++)
@@ -619,7 +620,7 @@ namespace Protocols
                                 int lo = hi + 1;
                                 if (lo < msg[6])
                                 {
-                                    globalObject.tagStorage.holdings[tag] = (UInt16)(msg[hi + 7] * 256 + msg[lo + 7]);
+                                    globalObject.tagStorage.setTag(space, tag, (msg[hi + 7] * 256 + msg[lo + 7]));
                                 }
                             }
                         }
@@ -636,7 +637,11 @@ namespace Protocols
                         response[7] = (byte)crc;
                         return response;
                 }
+                #endregion
             }
+
+            globalObject.updateVariables(space, startTag, startTag + tagNum - 1);
+
             response = new byte[0];  //wrong query - do not answer
             return response;
         }
